@@ -1,0 +1,6 @@
+@jaminBazar_Backend_HostAddress = http://localhost:5295
+
+GET {{jaminBazar_Backend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
