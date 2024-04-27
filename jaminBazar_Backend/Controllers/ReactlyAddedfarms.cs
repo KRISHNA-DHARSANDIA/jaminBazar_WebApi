@@ -7,6 +7,9 @@ using Newtonsoft.Json;
 using System.Data.SqlClient;
 using System.Text.Json;
 using SQLHelper;
+using System.Security.Cryptography;
+using System;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -361,6 +364,44 @@ namespace jaminBazar_Backend.Controllers
                     string query = "select * from propertydata where pid = @propertyid";
 
                     SqlParameter para = new SqlParameter("@propertyid", pid);
+
+                    using (SqlDataReader reader = SQLHelper.SqlHelper.ExecuteReader(conn, CommandType.Text, query, para))
+                    {
+                        DataTable dataTable = new DataTable();
+                        dataTable.Load(reader);
+
+                        string json = JsonConvert.SerializeObject(dataTable);
+
+                        return Ok(json);
+                    }
+                }
+                else
+                {
+                    return Ok();
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error: {ex.Message}");
+            }
+        }
+
+        [HttpGet]
+        [Route("getUserProperty")]
+        public IActionResult GetUserProperty(string uuid)
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(uuid))
+                {
+                    string query = @"select pid,ptitle,pdescription,ptype,purpose,totalprice,coverimagepath,
+                                    CONVERT(VARCHAR(12), propertydata.posting_date, 106) as posting_date 
+                                    from propertydata left join userRegisterdata 
+                                    on propertydata.ownerid = userRegisterdata.userid
+                                    where userRegisterdata.UUID = @uuid
+                                    order by propertydata.posting_date";
+
+                    SqlParameter para = new SqlParameter("@uuid", uuid);
 
                     using (SqlDataReader reader = SQLHelper.SqlHelper.ExecuteReader(conn, CommandType.Text, query, para))
                     {
