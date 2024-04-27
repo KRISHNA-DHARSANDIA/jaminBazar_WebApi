@@ -28,7 +28,7 @@ namespace jaminBazar_Backend.Controllers
             {
                 SqlConnection con = new SqlConnection(_Configuration.GetConnectionString("DefaultConnection").ToString());
 
-                if(con != null)
+                if (con != null)
                 {
                     conn = con;
                 }
@@ -200,9 +200,11 @@ namespace jaminBazar_Backend.Controllers
                 //    Params = obj as Dictionary<string, string>;
                 //}
 
+
                 if (Params.ValueKind == JsonValueKind.Object)
                 {
                     //string phonenumber = Convert.ToString(Params?["phnumber"]) ?? "";
+                    int? pid = Params.TryGetProperty("pid", out JsonElement pidElement) ? pidElement.GetInt32() : null;
                     string? purposeValue = Params.TryGetProperty("purpose", out var purposeElement) ? purposeElement.GetString() : null;
                     string? ptypeValue = Params.TryGetProperty("ptype", out var ptypeElement) ? ptypeElement.GetString() : null;
                     string? cityValue = Params.TryGetProperty("city", out var cityElement) ? cityElement.GetString() : null;
@@ -216,7 +218,7 @@ namespace jaminBazar_Backend.Controllers
                     string? contectoneValue = Params.TryGetProperty("contectone", out var contectoneElement) ? contectoneElement.GetString() : null;
                     string? contecttwoValue = Params.TryGetProperty("contecttwo", out var contecttwoElement) ? contecttwoElement.GetString() : null;
                     string? longitude = Params.TryGetProperty("logitude", out var logitudeelement) ? logitudeelement.GetString() : null;
-                    string? latitude = Params.TryGetProperty("latitude",out var latitudeelemnt) ? latitudeelemnt.GetString() : null;
+                    string? latitude = Params.TryGetProperty("latitude", out var latitudeelemnt) ? latitudeelemnt.GetString() : null;
 
                     string? imagpathValue = Params.TryGetProperty("imagePath", out var imagpathElement) ? imagpathElement.GetString() : null;
                     string? coverimagepathValue = Params.TryGetProperty("coverimagepath", out var coverimagepathElement) ? coverimagepathElement.GetString() : null;
@@ -225,34 +227,64 @@ namespace jaminBazar_Backend.Controllers
 
                     string? query = "select userid from userRegisterdata where UUID = @uuid";
                     SqlParameter newpara = new SqlParameter("@uuid", Params.GetProperty("uuid").GetString());
-                    string? ownerid = SQLHelper.SqlHelper.ExecuteScalar(conn,CommandType.Text,query,newpara).ToString();
+                    string? ownerid = SQLHelper.SqlHelper.ExecuteScalar(conn, CommandType.Text, query, newpara).ToString();
 
-
-                    string? insertQuery = @"INSERT INTO propertydata (ownerid, purpose, ptype, city, location, areasize, totalprice, possession, ptitle, pdescription, imagpath, email, contectone, contecttwo, posting_date,coverimagepath)
-                                           VALUES (@ownerid, @purpose, @ptype, @city, @location, @areasize, @totalprice, @possession, @ptitle, @pdescription, @imagpath, @email, @contectone, @contecttwo, GETDATE(),@coverimagepath)";
+                    if (pid != 0)
+                    {
+                        query = @"UPDATE propertydata 
+                                  SET ownerid = @ownerid,
+                                  purpose = @purpose,
+                                  ptype = @ptype,
+                                  city = @city,
+                                  location = @location,
+                                  areasize = @areasize,
+                                  totalprice = @totalprice,
+                                  possession = @possession,
+                                  ptitle = @ptitle,
+                                  pdescription = @pdescription,
+                                  imagpath = @imagpath,
+                                  email = @email,
+                                  contectone = @contectone,
+                                  contecttwo = @contecttwo,
+                                  posting_date = GETDATE(),
+                                  coverimagepath = @coverimagepath,
+                                  longitude = @longitude,
+                                  latitude = @latitude
+                                  WHERE pid = @pid";
+                    }
+                    else
+                    {
+                        query = @"INSERT INTO propertydata (ownerid, purpose, ptype, city, location, areasize,
+                                 totalprice, possession, ptitle, pdescription, imagpath, email, contectone, 
+                                 contecttwo, posting_date,coverimagepath,longitude,latitude)
+                                 VALUES (@ownerid, @purpose, @ptype, @city, @location, @areasize, 
+                                 @totalprice, @possession, @ptitle, @pdescription, @imagpath, @email,
+                                 @contectone, @contecttwo, GETDATE(),@coverimagepath,@longitude,@latitude)";
+                    }
 
                     SqlParameter[] para = new SqlParameter[]
                     {
                         new SqlParameter("@ownerid", SqlDbType.Int ) {Value =  ownerid },
+                        new SqlParameter("@pid", SqlDbType.Int ) {Value =  pid},
                         new SqlParameter("@purpose", SqlDbType.VarChar) { Value = purposeValue },
                         new SqlParameter("@ptype", SqlDbType.VarChar) { Value = ptypeValue },
-                        new SqlParameter("@city", SqlDbType.VarChar) { Value = "" },
-                        new SqlParameter("@location", SqlDbType.VarChar) { Value =  "" },
-                        new SqlParameter("@areasize", SqlDbType.VarChar) { Value =  "" },
-                        new SqlParameter("@totalprice", SqlDbType.Int) { Value =  0},
+                        new SqlParameter("@city", SqlDbType.VarChar) { Value = cityValue },
+                        new SqlParameter("@location", SqlDbType.VarChar) { Value =  locationValue },
+                        new SqlParameter("@areasize", SqlDbType.Int) { Value =  areasizeValue},
+                        new SqlParameter("@totalprice", SqlDbType.Int) { Value =  totalpriceValue},
                         new SqlParameter("@possession", SqlDbType.Bit) { Value =  true },
                         new SqlParameter("@ptitle", SqlDbType.VarChar) { Value = ptitleValue },
                         new SqlParameter("@pdescription", SqlDbType.VarChar) { Value =  pdescriptionValue },
                         new SqlParameter("@imagpath", SqlDbType.VarChar) { Value =  imagpathValue},
-                        new SqlParameter("@email", SqlDbType.VarChar) { Value =  "" },
-                        new SqlParameter("@contectone", SqlDbType.VarChar) { Value =  ""},
-                        new SqlParameter("@contecttwo", SqlDbType.VarChar) { Value =  ""},
-                        //new SqlParameter("@longitude", SqlDbType.VarChar) { Value =  ""},
-                        //new SqlParameter("@latitude", SqlDbType.VarChar) { Value =  ""},
+                        new SqlParameter("@email", SqlDbType.VarChar) { Value =  emailValue },
+                        new SqlParameter("@contectone", SqlDbType.VarChar) { Value =  contectoneValue},
+                        new SqlParameter("@contecttwo", SqlDbType.VarChar) { Value =  contecttwoValue},
+                        new SqlParameter("@longitude", SqlDbType.Float) { Value =  longitude},
+                        new SqlParameter("@latitude", SqlDbType.Float) { Value =  latitude},
                         new SqlParameter("@coverimagepath", SqlDbType.VarChar) { Value = coverimagepathValue },
                     };
 
-                    int rowsAffected = SQLHelper.SqlHelper.ExecuteNonQuery(conn, CommandType.Text,insertQuery, para);
+                    int rowsAffected = SQLHelper.SqlHelper.ExecuteNonQuery(conn, CommandType.Text, query, para);
 
                     if (rowsAffected > 0)
                     {
@@ -262,6 +294,7 @@ namespace jaminBazar_Backend.Controllers
                     {
                         return BadRequest("Something went wrong in storeproperty");
                     }
+
                 }
                 else
                 {
@@ -271,6 +304,82 @@ namespace jaminBazar_Backend.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, $"storeproperty: {ex.Message}");
+            }
+        }
+
+        [HttpPost]
+        [Route("deleteuserproperty")]
+
+        public IActionResult deleteUserProperty([FromBody] Dictionary<string, string> Params)
+        {
+            try
+            {
+                if (Params != null && Params.ContainsKey("pid"))
+                {
+                    int propertyid = Convert.ToInt32(Params["pid"]);
+
+                    conn.Open();
+
+                    SqlParameter[] para = new SqlParameter[]
+                    {
+                        new SqlParameter("@propertyid",SqlDbType.Int) {Value = propertyid},
+                    };
+
+                    string delqury = "delete from propertydata where pid = @propertyid; " +
+                                     "delete from favoriteProperty where pid = @propertyid; ";
+
+                    int rowsAffected = SQLHelper.SqlHelper.ExecuteNonQuery(conn, CommandType.Text, delqury, para);
+
+                    if (rowsAffected > 0)
+                    {
+                        return Ok("deleted");
+                    }
+                    else
+                    {
+                        return BadRequest("something going wrong inside propertydelete");
+                    }
+                }
+                else
+                {
+                    return BadRequest("Invalid or missing pid parameter where delete property");
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"storeproperty: {ex.Message}");
+            }
+        }
+
+        [HttpGet]
+        [Route("getSpecificPropertyData")]
+        public IActionResult GetSpecificPropertyData(string pid)
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(pid))
+                {
+                    string query = "select * from propertydata where pid = @propertyid";
+
+                    SqlParameter para = new SqlParameter("@propertyid", pid);
+
+                    using (SqlDataReader reader = SQLHelper.SqlHelper.ExecuteReader(conn, CommandType.Text, query, para))
+                    {
+                        DataTable dataTable = new DataTable();
+                        dataTable.Load(reader);
+
+                        string json = JsonConvert.SerializeObject(dataTable);
+
+                        return Ok(json);
+                    }
+                }
+                else
+                {
+                    return Ok();
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error: {ex.Message}");
             }
         }
     }
