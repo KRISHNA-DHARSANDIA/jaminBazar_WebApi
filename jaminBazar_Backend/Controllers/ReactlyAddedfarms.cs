@@ -47,14 +47,13 @@ namespace jaminBazar_Backend.Controllers
             {
                 if (Params != null && Params.ContainsKey("phnumber"))
                 {
-
                     string phonenumber = Params["phnumber"];
 
                     string query = " select pd.* , (select userid from userRegisterdata where phonenumber = @phnumber) as userid ," +
                                    " CASE WHEN fp.pid IS NOT NULL THEN 'true' ELSE 'flase' END AS is_favorite " +
                                    " FROM propertydata pd " +
                                    " LEFT JOIN favoriteProperty fp ON fp.pid = pd.pid AND fp.userid = (select userid from userRegisterdata where phonenumber = @phnumber) " +
-                                   " WHERE pd.posting_date >= DATEADD(DAY, -390, GETDATE());";
+                                   " WHERE pd.posting_date >= DATEADD(DAY, -390, GETDATE()) order by pd.posting_date desc;";
 
                     SqlParameter para = new SqlParameter("@phnumber", phonenumber);
 
